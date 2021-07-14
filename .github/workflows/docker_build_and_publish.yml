@@ -58,6 +58,7 @@ jobs:
       - name: Publish Images
         id: Push_Docker_Images
         run: |
+          echo BRANCH: ${{ steps.extract_branch.outputs.branch }}
           IMAGE_TAG=${{github.event.inputs.image_tag}}
           GIT_HASH_IMAGE_TAG=${{ steps.extract_branch.outputs.SHORT_COMMIT_ID }}
           for image in `docker images ${{ env.DOCKER_REPO }}/*:${GIT_HASH_IMAGE_TAG} --format "{{.Repository}}"`
