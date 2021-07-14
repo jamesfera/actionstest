@@ -38,11 +38,19 @@ jobs:
           ref: ${{github.event.inputs.git_commit}}
           fetch-depth: 0
 
+      - name: Configure GitVersion
+        shell: bash
+        run: |
+          echo "mode: Mainline" > GitVersion.yml
+          echo "branches: {}" >> GitVersion.yml
+          echo "ignore:" >> GitVersion.yml
+          echo "  sha: []" >> GitVersion.yml
+
       - name: Determine Version
         id:   gitversion
         uses: gittools/actions/gitversion/execute@v0.9.7
         with:
-          additionalArguments: '/overrideconfig mode=Mainline /showConfig'
+          additionalArguments: '/showConfig'
       
       - name: Extract branch name and clean up special characters
         shell: bash
