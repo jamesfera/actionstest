@@ -6,10 +6,7 @@ on:
       git_commit:
         description: "Git Commit Hash or Branch Name"
         required: true
-        default: 'master' 
-      image_tag:
-        description: "Docker Image Tag"
-        required: true        
+        default: 'master'  
 
 env:
   DOCKER_REPO: inventoryclient12311111.azurecr.io
@@ -67,7 +64,7 @@ jobs:
         run: |
           export IMAGE_TAG=$GITVERSION_SHORTSHA
           docker-compose build \
-            --build-arg COMMIT_HASH=$GITVERSION_SHORTSHA \
+            --build-arg COMMIT_HASH=$GITVERSION_SHA \
             --build-arg IMAGE_VERSION=$GITVERSION_FULLSEMVER \
             --build-arg IMAGE_VERSION_LONG=$GITVERSION_INFORMATIONALVERSION \
 

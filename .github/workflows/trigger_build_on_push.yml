@@ -23,18 +23,20 @@ jobs:
       with:
         workflow: Build and Publish Docker Image
         token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
-        inputs: '{ "git_commit": "${{ steps.extract_branch.outputs.branch }}", "image_tag": "${{ steps.extract_branch.outputs.branch }}" }'
+        inputs: '{ "git_commit": "${{ steps.extract_branch.outputs.branch }}" }'
 
-    # - name: Build VM
-    #   uses: aurelien-baudet/workflow-dispatch@v2
-    #   with:
-    #     workflow: Create and Bootstrap Virtual Machine
-    #     token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
-    #     inputs: '{ "name": "pushtest", "swarm": "false" }'
+    - name: Build VM
+      uses: aurelien-baudet/workflow-dispatch@v2
+      with:
+        repo: jamesfera/actionstest
+        workflow: Create and Bootstrap Virtual Machine
+        token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
+        inputs: '{ "name": "${{ steps.extract_branch.outputs.branch }}", "swarm": "true" }'
 
-    # - name: Deploy
-    #   uses: aurelien-baudet/workflow-dispatch@v2
-    #   with:
-    #     workflow: Create and Bootstrap Virtual Machine
-    #     token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
-    #     inputs: '{ "name": "pushtest", "swarm": "false" }'
+    - name: Deploy
+      uses: aurelien-baudet/workflow-dispatch@v2
+      with:
+        repo: lakesidelabs/inventory.bootstrap
+        workflow: Create and Bootstrap Virtual Machine
+        token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
+        inputs: '{ "name": "pushtest", "swarm": "false" }'

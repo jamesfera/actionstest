@@ -18,7 +18,7 @@ jobs:
         workflow: Build and Publish Docker Image
         token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
         ref: ${{ github.event.pull_request.head.ref }}
-        inputs: '{ "git_commit": "${{ github.event.pull_request.head.ref }}", "image_tag": "pr${{ github.event.pull_request.number }}" }'
+        inputs: '{ "git_commit": "${{ github.event.pull_request.head.ref }}" }'
 
     # - name: Build VM
     #   uses: aurelien-baudet/workflow-dispatch@v2
