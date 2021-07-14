@@ -26,7 +26,7 @@ jobs:
             export NODE_ID=$(docker info -f '{{.Swarm.NodeID}}')
             export DOCKER_SWARM_HOST=$(docker info --format "{{ (index .Swarm.RemoteManagers 0).Addr }}")
             export DOCKER_SWARM_HOST=${DOCKER_SWARM_HOST/2377/2374}
-            docker -H $DOCKER_SWARM_HOST stack rm inventory_${{github.event.client_payload.name}} || true
+            docker -H $DOCKER_SWARM_HOST stack rm inventory_${{github.event.inputs.name}} || true
             (docker swarm leave && sleep 30) || true            
             docker -H $DOCKER_SWARM_HOST node rm $NODE_ID || true            
 
