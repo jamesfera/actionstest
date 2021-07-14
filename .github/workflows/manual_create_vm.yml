@@ -66,7 +66,7 @@ jobs:
       - name: Bootstrap
         id: Bootstrap_VM
         uses: cross-the-world/ssh-scp-ssh-pipelines@latest
-        if: ${{ steps.create_vm.outputs.should_bootstrap }}
+        if: ${{ steps.create_vm.outputs.should_bootstrap  == 'true' }}
         with:
           host: "aexautodeploy${{github.event.inputs.name}}.eastus.cloudapp.azure.com"
           key: ${{ secrets.AEX_SSH_PRIVATE_KEY }}          
@@ -80,7 +80,7 @@ jobs:
       - name: Join Docker Swarm
         id: Docker
         uses: cross-the-world/ssh-scp-ssh-pipelines@latest
-        if: ${{ steps.create_vm.outputs.should_bootstrap }}
+        if: ${{ steps.create_vm.outputs.should_bootstrap == 'true' }}
         with:          
           host: "aexautodeploy${{github.event.inputs.name}}.eastus.cloudapp.azure.com"
           key: ${{ secrets.AEX_SSH_PRIVATE_KEY }}          
