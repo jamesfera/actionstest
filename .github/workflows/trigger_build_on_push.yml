@@ -23,7 +23,7 @@ jobs:
       with:
         workflow: Build and Publish Docker Image
         token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
-        inputs: '{ "git_commit": "${{ steps.vars.outputs.branch }}", "image_tag": "${{ steps.vars.outputs.branch }}" }'
+        inputs: '{ "git_commit": "${{ steps.extract_branch.outputs.branch }}", "image_tag": "${{ steps.extract_branch.outputs.branch }}" }'
 
     # - name: Build VM
     #   uses: aurelien-baudet/workflow-dispatch@v2
