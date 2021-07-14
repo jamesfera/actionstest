@@ -1,0 +1,60 @@
+name: Create and Bootstrap Virtual Machine
+
+on:
+  push:  
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    name: Build VM   
+    steps:
+    - name: Invoke workflow in another repo with inputs
+      uses: aurelien-baudet/workflow-dispatch@v2
+      with:
+        workflow: manual_create_vm        
+        token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
+        inputs: '{ "name": "pushtest", "swarm": false }'
+
+  # bootstrap:
+      # - name: Checkout
+      #   uses: actions/checkout@v2
+      #   with:
+      #     submodules: true      
+
+      # - name: Bootstrap
+      #   id: Bootstrap_VM
+      #   uses: cross-the-world/ssh-scp-ssh-pipelines@latest
+      #   with:
+      #     host: "aexautodeploy${{github.event.client_payload.name}}.eastus.cloudapp.azure.com"
+      #     key: ${{ secrets.AEX_SSH_PRIVATE_KEY }}          
+      #     user: 'azureuser'
+      #     scp: |
+      #       ./scripts => /home/azureuser/inventory.bootstrap
+      #     last_ssh: |
+      #       sudo chmod +x ./inventory.bootstrap/scripts/azurevmbootstrap.sh
+      #       ./inventory.bootstrap/scripts/azurevmbootstrap.sh
+
+      # - name: Docker
+      #   id: Docker
+      #   uses: cross-the-world/ssh-scp-ssh-pipelines@latest
+      #   with:
+      #     host: "aexautodeploy${{github.event.client_payload.name}}.eastus.cloudapp.azure.com"
+      #     key: ${{ secrets.AEX_SSH_PRIVATE_KEY }}          
+      #     user: 'azureuser'
+      #     last_ssh: |
+      #       docker swarm join --token ${{ secrets.SWARM_JOIN_TOKEN }}
+      #       export DOCKER_SWARM_HOST=$(docker info --format "{{ (index .Swarm.RemoteManagers 0).Addr }}")
+      #       export DOCKER_SWARM_HOST=${DOCKER_SWARM_HOST/2377/2374}
+      #       export NODE_ID=$(docker info -f '{{.Swarm.NodeID}}')
+      #       docker -H $DOCKER_SWARM_HOST node update --label-add deploymenttag=${{github.event.client_payload.name}} $NODE_ID
+
+      #       echo "export DOCKER_SWARM_HOST=${DOCKER_SWARM_HOST}" > ./.bash_aliases
+      #       echo "alias dockerh='docker -H $DOCKER_SWARM_HOST'" >> ./.bash_aliases
+
+      # - uses: act10ns/slack@v1
+      #   with:
+      #     status: ${{ job.status }}
+      #     steps: ${{ toJson(steps) }}
+      #     channel: '#builds'
+      #   if: always()
