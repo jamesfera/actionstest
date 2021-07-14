@@ -28,7 +28,7 @@ jobs:
           creds: ${{secrets.AZURE_CREDENTIALS}}
 
       - name: Create VM
-        id: Create_VM
+        id: create_vm
         uses: azure/CLI@v1
         with:
           azcliversion: 2.25.0
@@ -36,6 +36,7 @@ jobs:
             VM_NAME="auto-vm-${{github.event.inputs.name}}"
             if [ "$(az vm list -d -o table --query "[?name=='$VM_NAME']")" = "" ];
             then
+              echo "::set-output name=should_bootstrap::true"
               az vm create \
               --resource-group AzureVM \
               --name $VM_NAME \
@@ -53,6 +54,7 @@ jobs:
               echo $PRINCIPAL_ID
               az role assignment create --assignee-object-id $PRINCIPAL_ID --role "Key Vault Secrets User" --resource-group "AzureVM"
             else
+              echo "::set-output name=should_bootstrap::false"
               echo "VM Already Exists"
             fi
 
@@ -64,6 +66,7 @@ jobs:
       - name: Bootstrap
         id: Bootstrap_VM
         uses: cross-the-world/ssh-scp-ssh-pipelines@latest
+        if: ${{ steps.create_vm.outputs.should_bootstrap }}
         with:
           host: "aexautodeploy${{github.event.inputs.name}}.eastus.cloudapp.azure.com"
           key: ${{ secrets.AEX_SSH_PRIVATE_KEY }}          
@@ -77,7 +80,8 @@ jobs:
       - name: Join Docker Swarm
         id: Docker
         uses: cross-the-world/ssh-scp-ssh-pipelines@latest
-        with:
+        if: ${{ steps.create_vm.outputs.should_bootstrap }}
+        with:          
           host: "aexautodeploy${{github.event.inputs.name}}.eastus.cloudapp.azure.com"
           key: ${{ secrets.AEX_SSH_PRIVATE_KEY }}          
           user: 'azureuser'
