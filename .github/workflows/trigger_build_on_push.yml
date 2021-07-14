@@ -15,7 +15,7 @@ jobs:
     steps:
 
     - name: Extract Branch
-      id: id: extract_branch
+      id: extract_branch
       run: echo "::set-output name=branch::${GITHUB_REF##*/}"
 
     - name: Build Docker Image
