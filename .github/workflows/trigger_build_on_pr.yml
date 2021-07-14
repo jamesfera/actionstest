@@ -1,0 +1,17 @@
+name: Trigger VM Build
+
+on:
+  pull_request:  
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    name: Build VM   
+    steps:
+    - name: Invoke workflow in another repo with inputs
+      uses: aurelien-baudet/workflow-dispatch@v2
+      with:
+        workflow: Create and Bootstrap Virtual Machine
+        token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
+        inputs: '{ "name": "pushtest", "swarm": "false" }'
