@@ -65,8 +65,10 @@ jobs:
       - name: Build Docker Images
         id: Build_Docker_Images
         run: |
-          export IMAGE_TAG=${{ steps.extract_branch.outputs.SHORT_COMMIT_ID }}
-          docker-compose build --build-arg COMMIT_HASH=$GIT_HASH_IMAGE_TAG
+          docker-compose build \
+            --build-arg COMMIT_HASH=$GITVERSION_SHORTSHA \
+            --build-arg IMAGE_VERSION=$GITVERSION_FULLSEMVER \
+            --build-arg IMAGE_VERSION_LONG=$GITVERSION_INFORMATIONALVERSION \
 
       - name: Login to Azure Container Registry
         uses: docker/login-action@v1
@@ -78,20 +80,25 @@ jobs:
       - name: Publish Images
         id: Push_Docker_Images
         run: |
-          echo BRANCH: ${{ steps.extract_branch.outputs.branch }}
-          echo VERSION: $GITVERSION_SEMVER
-          echo VERSION: $GITVERSION_NUGETVERSIONV2
-          IMAGE_TAG=${{github.event.inputs.image_tag}}
-          GIT_HASH_IMAGE_TAG=${{ steps.extract_branch.outputs.SHORT_COMMIT_ID }}
+          echo BRANCH: $GITVERSION_ESCAPEDBRANCHNAME
+          echo VERSION: $GITVERSION_FULLSEMVER
+
+          BRANCH_NAME=$GITVERSION_ESCAPEDBRANCHNAME
+          IMAGE_TAG=$GITVERSION_FULLSEMVER
+          GIT_HASH_IMAGE_TAG=$GITVERSION_SHORTSHA
+
           for image in `docker images ${{ env.DOCKER_REPO }}/*:${GIT_HASH_IMAGE_TAG} --format "{{.Repository}}"`
           do
 
             docker tag ${image}:$GIT_HASH_IMAGE_TAG ${image}:$IMAGE_TAG
+            docker tag ${image}:$GIT_HASH_IMAGE_TAG ${image}:$BRANCH_NAME
+
             docker push ${image}:$GIT_HASH_IMAGE_TAG
             docker push ${image}:$IMAGE_TAG
+            docker push ${image}:$BRANCH_NAME
 
-            docker rmi ${image}:$GIT_HASH_IMAGE_TAG
-            docker rmi ${image}:$IMAGE_TAG
+            #docker rmi ${image}:$GIT_HASH_IMAGE_TAG
+            #docker rmi ${image}:$IMAGE_TAG
 
           done
 
