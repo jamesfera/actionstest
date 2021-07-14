@@ -42,7 +42,7 @@ jobs:
         id:   gitversion
         uses: gittools/actions/gitversion/execute@v0.9.7
         with:
-          additionalArguments: '/showConfig'
+          additionalArguments: '/overrideconfig mode=Mainline /showConfig'
       
       - name: Extract branch name and clean up special characters
         shell: bash
