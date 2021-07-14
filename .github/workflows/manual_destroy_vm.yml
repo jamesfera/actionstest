@@ -40,7 +40,10 @@ jobs:
         uses: azure/CLI@v1
         with:
           inlineScript: |
-            az resource delete --ids $(az resource list --tag deploymentgroup="auto-vm-${{github.event.inputs.name}}" -otable --query "[].id" -otsv)
+            VM_NAME="auto-vm-${{github.event.inputs.name}}"
+            PRINCIPAL_ID=$(az vm show -g AzureVM -n $VM_NAME --query "identity.principalId" -otsv)
+            az role assignment delete --assignee $PRINCIPAL_ID --role "Key Vault Secrets User" --resource-group "AzureVM"
+            az resource delete --ids $(az resource list --tag deploymentgroup=$VM_NAME -otable --query "[].id" -otsv)
 
       # - uses: act10ns/slack@v1
       #   with:

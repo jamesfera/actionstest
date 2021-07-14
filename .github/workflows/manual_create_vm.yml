@@ -51,7 +51,7 @@ jobs:
               sleep 20
               PRINCIPAL_ID=$(az vm show -g AzureVM -n $VM_NAME --query "identity.principalId" -otsv)
               echo $PRINCIPAL_ID
-              az role assignment create --assignee-object-id $PRINCIPAL_ID --role "Key Vault Secrets User" --resource-group "/subscriptions/5b05ad77-2db4-4691-a3af-6fd0ba4294a3/resourceGroups/AzureVM"
+              az role assignment create --assignee-object-id $PRINCIPAL_ID --role "Key Vault Secrets User" --resource-group "AzureVM"
             else
               echo "VM Already Exists"
             fi
