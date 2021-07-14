@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
   api:
-    image: ${DOCKER_REPO-}/aex.inventory.api:${IMAGE_TAG:-dev}
+    image: ${DOCKER_REPO-}/test_image:${IMAGE_TAG}
     build:
       context: .
       dockerfile: Dockerfile
