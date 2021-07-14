@@ -12,7 +12,7 @@ jobs:
     - name: Invoke workflow in another repo with inputs
       uses: aurelien-baudet/workflow-dispatch@v2
       with:
-        workflow: manual_create_vm        
+        workflow: Create and Bootstrap Virtual Machine
         token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
         inputs: '{ "name": "pushtest", "swarm": false }'
 
