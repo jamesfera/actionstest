@@ -1,0 +1,57 @@
+name: Destory Virtual Machine
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "Name of the Virutal Machine"
+        required: true          
+
+jobs:
+
+  destroy:
+    runs-on: ubuntu-latest
+    name: Destory Virtual Machine
+ 
+    steps:
+
+      - name: Cleanup Docker Stack
+        id: Docker
+        uses: cross-the-world/ssh-scp-ssh-pipelines@latest
+        with:
+          host: "aexautodeploy${{github.event.inputs.name}}.eastus.cloudapp.azure.com"
+          key: ${{ secrets.AEX_SSH_PRIVATE_KEY }}          
+          user: 'azureuser'
+          last_ssh: |
+            export NODE_ID=$(docker info -f '{{.Swarm.NodeID}}')
+            export DOCKER_SWARM_HOST=$(docker info --format "{{ (index .Swarm.RemoteManagers 0).Addr }}")
+            export DOCKER_SWARM_HOST=${DOCKER_SWARM_HOST/2377/2374}
+            docker -H $DOCKER_SWARM_HOST stack rm inventory_${{github.event.client_payload.name}} || true
+            docker swarm leave || true
+            sleep 30
+            docker -H $DOCKER_SWARM_HOST node rm $NODE_ID || true
+            
+
+      - name: Login via Az module
+        uses: azure/login@v1
+        with:
+          creds: ${{secrets.AZURE_CREDENTIALS}}
+
+      - name: Destroy VM
+        id: Destroy_VM
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az resource delete --ids $(az resource list --tag deploymentgroup="auto-vm-${{github.event.inputs.name}}" -otable --query "[].id" -otsv)
+
+      # - uses: act10ns/slack@v1
+      #   with:
+      #     status: ${{ job.status }}
+      #     steps: ${{ toJson(steps) }}
+      #     channel: '#builds'
+      #   if: always()
+
+
+# to generate AZURE_CREDENTIALS github secret:
+
+#az ad sp create-for-rbac --name "GithubActionsServicePrincipal" --role contributor --scopes /subscriptions/5b05ad77-2db4-4691-a3af-6fd0ba4294a3/resourceGroups/AzureVm --sdk-auth
