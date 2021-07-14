@@ -65,6 +65,7 @@ jobs:
       - name: Build Docker Images
         id: Build_Docker_Images
         run: |
+          export IMAGE_TAG=$GITVERSION_SHORTSHA
           docker-compose build \
             --build-arg COMMIT_HASH=$GITVERSION_SHORTSHA \
             --build-arg IMAGE_VERSION=$GITVERSION_FULLSEMVER \
@@ -84,20 +85,19 @@ jobs:
           echo VERSION: $GITVERSION_FULLSEMVER
 
           BRANCH_NAME=$GITVERSION_ESCAPEDBRANCHNAME
-          IMAGE_TAG=$GITVERSION_FULLSEMVER
-          GIT_HASH_IMAGE_TAG=$GITVERSION_SHORTSHA
+          IMAGE_VERSION=$GITVERSION_FULLSEMVER
 
-          for image in `docker images ${{ env.DOCKER_REPO }}/*:${GIT_HASH_IMAGE_TAG} --format "{{.Repository}}"`
+          for image in `docker images ${{ env.DOCKER_REPO }}/*:${GITVERSION_SHORTSHA} --format "{{.Repository}}"`
           do
 
-            docker tag ${image}:$GIT_HASH_IMAGE_TAG ${image}:$IMAGE_TAG
-            docker tag ${image}:$GIT_HASH_IMAGE_TAG ${image}:$BRANCH_NAME
+            docker tag ${image}:$GITVERSION_SHORTSHA ${image}:$IMAGE_VERSION
+            docker tag ${image}:$GITVERSION_SHORTSHA ${image}:$BRANCH_NAME
 
-            docker push ${image}:$GIT_HASH_IMAGE_TAG
-            docker push ${image}:$IMAGE_TAG
+            docker push ${image}:$GITVERSION_SHORTSHA
+            docker push ${image}:$IMAGE_VERSION
             docker push ${image}:$BRANCH_NAME
 
-            #docker rmi ${image}:$GIT_HASH_IMAGE_TAG
+            #docker rmi ${image}:$GITVERSION_SHORTSHA
             #docker rmi ${image}:$IMAGE_TAG
 
           done
