@@ -16,18 +16,18 @@ jobs:
       with:
         workflow: Build and Publish Docker Image
         token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
-        inputs: '{ "git_commit": "pushtest" }'
+        inputs: '{ "git_commit": "${{ github.event.pull_request.head.ref }}", "image_tag": "" }'
 
-    - name: Build VM
-      uses: aurelien-baudet/workflow-dispatch@v2
-      with:
-        workflow: Create and Bootstrap Virtual Machine
-        token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
-        inputs: '{ "name": "pushtest", "swarm": "false" }'
+    # - name: Build VM
+    #   uses: aurelien-baudet/workflow-dispatch@v2
+    #   with:
+    #     workflow: Create and Bootstrap Virtual Machine
+    #     token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
+    #     inputs: '{ "name": "pushtest", "swarm": "false" }'
 
-    - name: Deploy
-      uses: aurelien-baudet/workflow-dispatch@v2
-      with:
-        workflow: Create and Bootstrap Virtual Machine
-        token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
-        inputs: '{ "name": "pushtest", "swarm": "false" }'
+    # - name: Deploy
+    #   uses: aurelien-baudet/workflow-dispatch@v2
+    #   with:
+    #     workflow: Create and Bootstrap Virtual Machine
+    #     token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
+    #     inputs: '{ "name": "pushtest", "swarm": "false" }'

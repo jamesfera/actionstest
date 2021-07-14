@@ -10,7 +10,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    name: Build VM   
+    name: Build and Publish Workflow
 
     steps:
 
@@ -19,7 +19,7 @@ jobs:
       with:
         workflow: Build and Publish Docker Image
         token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
-        inputs: '{ "git_commit": "pushtest" }'
+        inputs: '{ "git_commit": "${GITHUB_REF##*/}", "image_tag": "${GITHUB_REF##*/}" }'
 
     # - name: Build VM
     #   uses: aurelien-baudet/workflow-dispatch@v2
