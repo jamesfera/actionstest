@@ -65,7 +65,7 @@ jobs:
         id: Bootstrap_VM
         uses: cross-the-world/ssh-scp-ssh-pipelines@latest
         with:
-          host: "aexautodeploy${{github.event.client_payload.name}}.eastus.cloudapp.azure.com"
+          host: "aexautodeploy${{github.event.inputs.name}}.eastus.cloudapp.azure.com"
           key: ${{ secrets.AEX_SSH_PRIVATE_KEY }}          
           user: 'azureuser'
           scp: |
@@ -74,11 +74,11 @@ jobs:
             sudo chmod +x ./inventory.bootstrap/scripts/azurevmbootstrap.sh
             ./inventory.bootstrap/scripts/azurevmbootstrap.sh
 
-      - name: Docker
+      - name: Join Docker Swarm
         id: Docker
         uses: cross-the-world/ssh-scp-ssh-pipelines@latest
         with:
-          host: "aexautodeploy${{github.event.client_payload.name}}.eastus.cloudapp.azure.com"
+          host: "aexautodeploy${{github.event.inputs.name}}.eastus.cloudapp.azure.com"
           key: ${{ secrets.AEX_SSH_PRIVATE_KEY }}          
           user: 'azureuser'
           last_ssh: |
@@ -86,7 +86,7 @@ jobs:
             export DOCKER_SWARM_HOST=$(docker info --format "{{ (index .Swarm.RemoteManagers 0).Addr }}")
             export DOCKER_SWARM_HOST=${DOCKER_SWARM_HOST/2377/2374}
             export NODE_ID=$(docker info -f '{{.Swarm.NodeID}}')
-            docker -H $DOCKER_SWARM_HOST node update --label-add deploymenttag=${{github.event.client_payload.name}} $NODE_ID
+            docker -H $DOCKER_SWARM_HOST node update --label-add deploymenttag=${{github.event.inputs.name}} $NODE_ID
 
             echo "export DOCKER_SWARM_HOST=${DOCKER_SWARM_HOST}" > ./.bash_aliases
             echo "alias dockerh='docker -H $DOCKER_SWARM_HOST'" >> ./.bash_aliases
