@@ -45,7 +45,7 @@ jobs:
       - name: Build Docker Images
         id: Build_Docker_Images
         run: |
-          export IMAGE_TAG=${{ steps.vars.outputs.SHORT_COMMIT_ID }}
+          export IMAGE_TAG=${{ steps.extract_branch.outputs.SHORT_COMMIT_ID }}
           docker-compose build --build-arg COMMIT_HASH=$GIT_HASH_IMAGE_TAG
 
       - name: Login to Azure Container Registry
@@ -59,7 +59,7 @@ jobs:
         id: Push_Docker_Images
         run: |
           IMAGE_TAG=${{github.event.inputs.image_tag}}
-          GIT_HASH_IMAGE_TAG=${{ steps.vars.outputs.SHORT_COMMIT_ID }}
+          GIT_HASH_IMAGE_TAG=${{ steps.extract_branch.outputs.SHORT_COMMIT_ID }}
           for image in `docker images ${{ env.DOCKER_REPO }}/*:${GIT_HASH_IMAGE_TAG} --format "{{.Repository}}"`
           do
 
