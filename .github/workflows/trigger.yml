@@ -14,7 +14,7 @@ jobs:
       with:
         workflow: Create and Bootstrap Virtual Machine
         token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
-        inputs: '{ "name": "pushtest", "swarm": false }'
+        inputs: '{ "name": "pushtest", "swarm": "false" }'
 
   # bootstrap:
       # - name: Checkout
