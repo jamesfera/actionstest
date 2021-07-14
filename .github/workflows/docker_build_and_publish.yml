@@ -5,7 +5,8 @@ on:
     inputs:
       git_commit:
         description: "Git Commit Hash or Branch Name"
-        required: true   
+        required: true
+        default: 'master' 
 
 env:
   DOCKER_REPO: inventoryclient12311111.azurecr.io
