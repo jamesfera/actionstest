@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
   api:
-    image: ${AZURE_DOCKER_REGISTRY-}/aex.inventory.api:${IMAGE_TAG:-dev}
+    image: ${DOCKER_REPO-}/aex.inventory.api:${IMAGE_TAG:-dev}
     build:
       context: .
       dockerfile: Dockerfile
