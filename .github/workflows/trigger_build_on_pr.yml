@@ -14,7 +14,10 @@ jobs:
 
     - name: Extract Branch
       id: extract_branch
-      run: echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
+      run: |
+        echo GITHUB_REF: ${GITHUB_REF#refs/heads/}
+        echo PR: ${{ github.event.pull_request.head.ref }}
+        echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
 
     - name: Build Docker Image
       uses: aurelien-baudet/workflow-dispatch@v2
