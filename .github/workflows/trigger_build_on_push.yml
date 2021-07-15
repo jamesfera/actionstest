@@ -39,4 +39,4 @@ jobs:
         repo: jamesfera/actionstest
         workflow: Docker Image Deployment
         token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
-        inputs: '{ "host": "aexautodeploy${{steps.extract_branch.outputs.branch}}.eastus.cloudapp.azure.com", "deployment_subdomain": "${{steps.extract_branch.outputs.branch}}" }'
+        inputs: '{ "host": "aexautodeploy${{steps.extract_branch.outputs.branch}}.eastus.cloudapp.azure.com", "deployment_subdomain": "${{steps.extract_branch.outputs.branch}}", "apiimagetag": "${{steps.extract_branch.outputs.branch}}", "uiimagetag": "develop" }'

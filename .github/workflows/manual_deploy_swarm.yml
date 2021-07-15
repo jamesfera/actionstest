@@ -10,7 +10,7 @@ on:
       host:
         description: 'URL of azure vm host'
         required: true
-        default: 'aexautodeploydev.eastus.cloudapp.azure.com'
+        default: 'aexautodeploydevelop.eastus.cloudapp.azure.com'
       apiimagetag:
         description: 'Docker tag for API'
         required: true
@@ -22,7 +22,7 @@ on:
       deployment_subdomain:
         description: 'Docker tag for UI'
         required: true
-        default: 'dev'
+        default: 'develop'
 
 jobs:
   deploy:
