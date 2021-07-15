@@ -1,0 +1,194 @@
+version: '3.5'
+
+volumes:
+  ravendb:
+  seq:
+
+networks:
+  traefik:
+    external: true
+    driver: overlay
+  internal:
+    external: false
+
+services:
+
+  api:
+    image:
+      ${DOCKER_REPO:?err}/aex.inventory.api:${API_IMAGE_TAG:?err}
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${DOTNET_ENVIRONMENT_NAME}
+      ConnectionStrings__InventoryConnection: ${INVENTORY_CONNECTION_STRING}
+      ConnectionStrings__LegacyConnection: ${LEGACY_CONNECTION_STRING}
+      ConnectionStrings__MessagingConnection: ${MESSAGING_CONNECTION_STRING}
+      CreateMessagingDatabase: ${CREATE_MESSAGING_DATABASE:-true}
+      AzureKeyVault__Enabled: ${AZURE_KEYVAULT_ENABLED}
+      AzureKeyVault__Name: ${AZURE_KEYVAULT_NAME}
+      DOCKER_IMAGE_VERSION: ${API_IMAGE_TAG}
+      ReactApp__ApplicationUrl: http://${DOMAIN_NAME:?err}
+      Security__AuthDisabled: ${AUTH_DISABLED:-false}
+      AzureAd__Instance: https://login.microsoftonline.com/
+      AzureAd__TenantId: ${AZURE_AD_TENANT_ID}
+      AzureAd__ClientId: ${AZURE_AD_API_CLIENT_ID}
+      AzureAd__SwaggerClientId: ${AZURE_AD_SWAGGER_CLIENT_ID}
+      ApplicationInsights__InstrumentationKey: ${APP_INSIGHTS_KEY}
+      APPLICATIONINSIGHTS_ROLE_NAME: Api
+      CorsOrigins: ${CORS_ORIGINS}
+    networks:
+      - internal
+      - traefik
+    deploy:
+      labels:
+        - traefik.http.routers.api${DEPLOYMENT_TAG:?err}.rule=Host(`api.${DOMAIN_NAME:?err}`)
+        - traefik.http.routers.api${DEPLOYMENT_TAG:?err}.middlewares=traefik-compress
+        - traefik.http.services.api${DEPLOYMENT_TAG:?err}.loadbalancer.server.port=80      
+        - traefik.http.middlewares.traefik-compress.compress=true
+        - traefik.enable=true
+      resources:
+        limits:
+          memory: 1G
+      placement:
+        constraints: 
+          - node.labels.deploymenttag == ${DEPLOYMENT_TAG:?err}
+
+  printer:
+    image:
+      ${DOCKER_REPO}/aex.inventory.labelprinting.server:${API_IMAGE_TAG:?err}
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${DOTNET_ENVIRONMENT_NAME}
+      ConnectionStrings__MessagingConnection: ${MESSAGING_CONNECTION_STRING}
+      # MessagingSqlPassword: ${MESSAGING_SQL_PASSWORD}
+      AzureKeyVault__Enabled: ${AZURE_KEYVAULT_ENABLED}
+      AzureKeyVault__Name: ${AZURE_KEYVAULT_NAME}
+      RavenDb__Urls__0: http://ravendb:8080
+      AzureAd__Instance: https://login.microsoftonline.com/
+      AzureAd__TenantId: ${AZURE_AD_TENANT_ID}
+      AzureAd__ClientId: ${AZURE_AD_API_CLIENT_ID}
+      AzureAd__SwaggerClientId: ${AZURE_AD_SWAGGER_CLIENT_ID}
+      ApplicationInsights__InstrumentationKey: ${APP_INSIGHTS_KEY}
+      APPLICATIONINSIGHTS_ROLE_NAME: LabelPrinting.Api
+      CorsOrigins: ${CORS_ORIGINS}
+    deploy:    
+      labels:
+        - traefik.http.routers.labelprinting${DEPLOYMENT_TAG:?err}.rule=Host(`printer.${DOMAIN_NAME:?err}`)
+        - traefik.http.services.labelprinting${DEPLOYMENT_TAG:?err}.loadbalancer.server.port=80
+        - traefik.enable=true
+      placement:
+        constraints: 
+          - node.labels.deploymenttag == ${DEPLOYMENT_TAG:?err}
+    networks:
+      - internal
+      - traefik
+
+  ui:
+    image:
+      ${DOCKER_REPO}/aex.inventory.react:${REACT_IMAGE_TAG:?err}
+    restart: unless-stopped
+    environment:
+      REACT_APP_BASE_URL: https://api.${DOMAIN_NAME:?err}
+      REACT_APP_PRINTER_BASE_URL: https://printer.${DOMAIN_NAME:?err}
+      REACT_APP_AUTH_CONFIG__CLIENT_ID: ${AZURE_AD_REACT_CLIENT_ID}
+      REACT_APP_TELEMETRY__CONNECTION_STRING: InstrumentationKey=${APP_INSIGHTS_KEY};IngestionEndpoint=https://eastus-1.in.applicationinsights.azure.com/
+      REACT_APP_TELEMETRY__ENABLED: ${REACT_APP_TELEMETRY__ENABLED}
+      REACT_APP_AUTH_CONFIG__SCOPES: "[\\\"openid\\\", \\\"profile\\\", \\\"offline_access\\\", \\\"${API_SCOPE:?err}\\\"]"
+    deploy:
+      labels:
+        - traefik.http.routers.ui${DEPLOYMENT_TAG:?err}.rule=Host(`${DOMAIN_NAME:?err}`)
+        - traefik.http.routers.ui${DEPLOYMENT_TAG:?err}.middlewares=traefik-compress
+        - traefik.http.services.ui${DEPLOYMENT_TAG:?err}.loadbalancer.server.port=80      
+        - traefik.http.middlewares.traefik-compress.compress=true
+        - traefik.enable=true
+      placement:
+        constraints: 
+          - node.labels.deploymenttag == ${DEPLOYMENT_TAG:?err}
+    networks:
+      - traefik
+
+  cloudservices:
+    image:
+      ${DOCKER_REPO}/aex.inventory.services.cloudservices:${API_IMAGE_TAG:?err}
+    restart: unless-stopped
+    environment:
+      DOTNET_ENVIRONMENT: ${DOTNET_ENVIRONMENT_NAME}
+      ConnectionStrings__MessagingConnection: ${MESSAGING_CONNECTION_STRING}
+      AzureKeyVault__Enabled: ${AZURE_KEYVAULT_ENABLED}
+      AzureKeyVault__Name: ${AZURE_KEYVAULT_NAME}
+      # MessagingSqlPassword: ${MESSAGING_SQL_PASSWORD}
+      #AzureStorage__ConnectionString: ${AZURE_STORAGE_CONNECTION_STRING}
+      AzureStorage__ContainerName: inventory
+      ApplicationInsights__InstrumentationKey: ${APP_INSIGHTS_KEY}
+      APPLICATIONINSIGHTS_ROLE_NAME: Services.CloudServices
+    deploy:
+      placement:
+        constraints: 
+          - node.labels.deploymenttag == ${DEPLOYMENT_TAG:?err}
+    networks:
+      - internal
+
+  notifications:
+    image:
+      ${DOCKER_REPO}/aex.inventory.services.notifications:${API_IMAGE_TAG:?err}
+    restart: unless-stopped
+    environment:
+      DOTNET_ENVIRONMENT: ${DOTNET_ENVIRONMENT_NAME}
+      ConnectionStrings__MessagingConnection: ${MESSAGING_CONNECTION_STRING}
+      # MessagingSqlPassword: ${MESSAGING_SQL_PASSWORD}
+      AzureKeyVault__Enabled: ${AZURE_KEYVAULT_ENABLED}
+      AzureKeyVault__Name: ${AZURE_KEYVAULT_NAME}
+      ApplicationInsights__InstrumentationKey: ${APP_INSIGHTS_KEY}
+      APPLICATIONINSIGHTS_ROLE_NAME: Services.Notifications
+    deploy:
+      placement:
+        constraints: 
+          - node.labels.deploymenttag == ${DEPLOYMENT_TAG:?err}
+    networks:
+      - internal
+
+  ravendb:
+    image: ravendb/ravendb:5.1.5-ubuntu.20.04-x64
+    restart: unless-stopped
+    environment:
+      RAVEN_Setup_Mode: "None"
+      RAVEN_License_Eula_Accepted: "true"
+      RAVEN_Security_UnsecuredAccessAllowed: "PublicNetwork"
+    volumes:
+      - "ravendb:/opt/RavenDB/Server/RavenData"
+    networks:
+      - internal
+      - traefik
+    deploy:
+      labels:
+        - traefik.http.routers.ravendb${DEPLOYMENT_TAG:?err}.rule=Host(`ravendb.${DOMAIN_NAME:?err}`)
+        - traefik.http.services.ravendb${DEPLOYMENT_TAG:?err}.loadbalancer.server.port=8080
+        - traefik.enable=true
+        # - traefik.http.routers.ravendb${DEPLOYMENT_SUBDOMAIN:?err}.middlewares=middlewares-oauth@file
+      placement:
+        constraints: 
+          - node.labels.deploymenttag == ${DEPLOYMENT_TAG:?err}
+      resources:
+        limits:
+          memory: ${RAVEN_MEMORY:-3G}
+
+  seq:
+    image: inventoryclient12311111.azurecr.io/seq_prod
+    restart: unless-stopped
+    environment:
+      SEQ_API_CANONICALURI: https://seq.${DOMAIN_NAME:?err}
+    volumes:
+      - "seq:/data"
+    networks:
+      - internal
+      - traefik
+    deploy:
+      labels:
+        - traefik.http.routers.seq${DEPLOYMENT_TAG:?err}.rule=Host(`seq.${DOMAIN_NAME:?err}`)
+        - traefik.http.services.seq${DEPLOYMENT_TAG:?err}.loadbalancer.server.port=80
+        - traefik.enable=true
+      resources:
+        limits:
+          memory: ${SEQ_MEMORY:-1G}
+      placement:
+        constraints: 
+          - node.labels.deploymenttag == ${DEPLOYMENT_TAG:?err}
