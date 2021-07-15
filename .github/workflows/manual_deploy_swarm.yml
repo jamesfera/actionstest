@@ -20,7 +20,7 @@ on:
         required: true
         default: 'develop'
       deployment_subdomain:
-        description: 'Docker tag for UI'
+        description: 'Subdomain'
         required: true
         default: 'develop'
 
@@ -97,7 +97,7 @@ jobs:
 
             echo "Run docker commands"
             docker-compose --env-file ./$ENV_FILE $DOCKER_COMPOSE pull
-            docker -H $DOCKER_SWARM_HOST stack deploy -c <(docker-compose --env-file ./$ENV_FILE $DOCKER_COMPOSE config) inventory_$DEPLOYMENT_SUBDOMAIN
+            docker -H $DOCKER_SWARM_HOST stack deploy -c <(docker-compose --env-file ./$ENV_FILE $DOCKER_COMPOSE config) --with-registry-auth inventory_$DEPLOYMENT_SUBDOMAIN
 
             echo "Cleanup"
             docker container prune -f
