@@ -1,0 +1,24 @@
+version: '3'
+
+volumes:
+  mssql:
+
+services:
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2019-CU8-ubuntu-16.04
+    restart: unless-stopped
+    ports:
+      - "${MSSQL_PORT:?err}:1433"
+    environment:
+      SA_PASSWORD: ${SQL_SERVER_PASSWORD:?err}
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"      
+    volumes:
+      - "mssql:/var/opt/mssql"
+    networks:
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 2G 
