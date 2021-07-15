@@ -1,0 +1,111 @@
+name: Docker Image Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: "dev|qa|staging|training"
+        required: true
+        default: 'dev'
+      host:
+        description: 'URL of azure vm host'
+        required: true
+        default: 'aexautodeploydev.eastus.cloudapp.azure.com'
+      apiimagetag:
+        description: 'Docker tag for API'
+        required: true
+        default: 'develop'
+      uiimagetag:
+        description: 'Docker tag for UI'
+        required: true
+        default: 'develop'
+      deployment_subdomain:
+        description: 'Docker tag for UI'
+        required: true
+        default: 'dev'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy Job
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: upload .env file and execute ssh commands
+        uses: cross-the-world/ssh-scp-ssh-pipelines@v1.1.4
+        env:
+          DOCKER_REPO: 'inventoryclient12311111.azurecr.io'
+          API_IMAGE_TAG: ${{ github.event.inputs.apiimagetag }}
+          REACT_IMAGE_TAG: ${{ github.event.inputs.uiimagetag }}
+          AUTH_DISABLED: false
+          SSH_HOST: ${{ github.event.inputs.host }}
+          ENV_FILE: '${{ github.event.inputs.configuration }}.env'
+          CONFIG_FILE: '${{ github.event.inputs.configuration }}.config'
+          DOMAIN_ROOT: aextest.recursive.co
+          DEPLOYMENT_SUBDOMAIN: ${{ github.event.inputs.deployment_subdomain }}
+          DEPLOYMENT_TAG: ${{ github.event.inputs.deployment_subdomain }}
+
+        with:
+          host: ${{ github.event.inputs.host }}
+          key: ${{ secrets.AEX_SSH_PRIVATE_KEY }}
+          user: 'azureuser'
+          scp: |
+            ./cicd/configs/${{ github.event.inputs.configuration }}.config => /home/azureuser
+            ./deployments => /home/azureuser/inventory.bootstrap
+          last_ssh: |
+            echo "Get the Docker Compose File(s) from the .config file"
+            DOCKER_COMPOSE=$(grep DOCKER_COMPOSE $CONFIG_FILE | xargs)
+            IFS='=' read -ra DOCKER_COMPOSE <<< "$DOCKER_COMPOSE"
+            DOCKER_COMPOSE=${DOCKER_COMPOSE[1]}
+
+            echo $DOCKER_COMPOSE
+
+            DOMAIN_NAME="${DEPLOYMENT_SUBDOMAIN}.${DOMAIN_ROOT}"
+
+            echo $DOMAIN_NAME
+
+            cp ./$CONFIG_FILE ./$ENV_FILE
+
+            echo "Finish building env file"  
+            echo >> ./$ENV_FILE 
+            echo DOCKER_REPO=$DOCKER_REPO >> ./$ENV_FILE
+            echo API_IMAGE_TAG=$API_IMAGE_TAG >> ./$ENV_FILE
+            echo AUTH_DISABLED=$AUTH_DISABLED >> ./$ENV_FILE
+            echo REACT_IMAGE_TAG=$REACT_IMAGE_TAG >> ./$ENV_FILE
+            echo DEPLOYMENT_SUBDOMAIN=$DEPLOYMENT_SUBDOMAIN >> ./$ENV_FILE
+            echo DOMAIN_ROOT=$DOMAIN_ROOT >> ./$ENV_FILE
+            echo DOMAIN_NAME=$DOMAIN_NAME >> ./$ENV_FILE
+            echo DEPLOYMENT_TAG=$DEPLOYMENT_TAG >> ./$ENV_FILE
+
+            cat ./$ENV_FILE
+
+            set -a && . ./$ENV_FILE && set +a
+
+            export NODE_ID=$(docker info -f '{{.Swarm.NodeID}}')
+            export DOCKER_SWARM_HOST=$(docker info --format "{{ (index .Swarm.RemoteManagers 0).Addr }}")
+            export DOCKER_SWARM_HOST=${DOCKER_SWARM_HOST/2377/2374}
+
+            docker -H $DOCKER_SWARM_HOST login -u ${{ secrets.ACR_USER }} -p ${{ secrets.ACR_PASSWORD }} $DOCKER_REPO
+            docker login -u ${{ secrets.ACR_USER }} -p ${{ secrets.ACR_PASSWORD }} $DOCKER_REPO
+            
+            docker-compose --env-file ./$ENV_FILE $DOCKER_COMPOSE config
+
+            echo "Run docker commands"
+            docker-compose --env-file ./$ENV_FILE $DOCKER_COMPOSE pull
+            docker -H $DOCKER_SWARM_HOST stack deploy -c <(docker-compose --env-file ./$ENV_FILE $DOCKER_COMPOSE config) inventory_$DEPLOYMENT_SUBDOMAIN
+
+            echo "Cleanup"
+            docker container prune -f
+            docker image prune -f
+
+
+      - uses: act10ns/slack@v1
+        with:
+          status: ${{ job.status }}
+          steps: ${{ toJson(steps) }}
+        if: always()

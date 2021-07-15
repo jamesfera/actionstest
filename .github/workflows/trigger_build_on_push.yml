@@ -36,7 +36,7 @@ jobs:
     - name: Deploy
       uses: aurelien-baudet/workflow-dispatch@v2
       with:
-        repo: lakesidelabs/inventory.bootstrap
-        workflow: Create and Bootstrap Virtual Machine
+        repo: jamesfera/actionstest
+        workflow: Docker Image Deployment
         token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
-        inputs: '{ "name": "pushtest", "swarm": "false" }'
+        inputs: '{ "host": "aexautodeploy${{steps.extract_branch.outputs.branch}}.eastus.cloudapp.azure.com", "deployment_subdomain": "${{steps.extract_branch.outputs.branch}}" }'

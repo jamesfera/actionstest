@@ -1,0 +1,26 @@
+version: '3.5'
+
+volumes:
+  mssql:
+
+services:  
+
+  mssql:
+    image: ${DOCKER_REPO}/legacydb:latest
+    restart: unless-stopped
+    ports:
+      - target: 1433
+        published: "${MSSQL_PORT:?err}"
+        mode: host
+    environment:
+      SA_PASSWORD: ${SQL_SERVER_PASSWORD:?err}
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"      
+    volumes:
+      - "mssql:/var/opt/mssql"
+    networks:
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 2G 
