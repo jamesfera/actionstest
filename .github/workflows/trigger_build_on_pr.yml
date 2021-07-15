@@ -12,6 +12,10 @@ jobs:
 
     steps:
 
+    - name: Extract Branch
+      id: extract_branch
+      run: echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
+
     - name: Build Docker Image
       uses: aurelien-baudet/workflow-dispatch@v2
       with:
@@ -20,16 +24,21 @@ jobs:
         ref: ${{ github.event.pull_request.head.ref }}
         inputs: '{ "git_commit": "${{ github.event.pull_request.head.ref }}" }'
 
-    # - name: Build VM
-    #   uses: aurelien-baudet/workflow-dispatch@v2
-    #   with:
-    #     workflow: Create and Bootstrap Virtual Machine
-    #     token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
-    #     inputs: '{ "name": "pushtest", "swarm": "false" }'
+    - name: Build VM
+      uses: aurelien-baudet/workflow-dispatch@v2
+      with:
+        repo: jamesfera/actionstest
+        ref: ${{ github.event.pull_request.head.ref }}
+        workflow: Create and Bootstrap Virtual Machine
+        token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
+        inputs: '{ "name": "${{ steps.extract_branch.outputs.branch }}", "swarm": "true" }'
 
-    # - name: Deploy
-    #   uses: aurelien-baudet/workflow-dispatch@v2
-    #   with:
-    #     workflow: Create and Bootstrap Virtual Machine
-    #     token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
-    #     inputs: '{ "name": "pushtest", "swarm": "false" }'
+    - name: Deploy
+      uses: aurelien-baudet/workflow-dispatch@v2
+      with:
+        wait-for-completion: false
+        ref: ${{ github.event.pull_request.head.ref }}
+        repo: jamesfera/actionstest
+        workflow: Docker Image Deployment
+        token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
+        inputs: '{ "host": "aexautodeploy${{steps.extract_branch.outputs.branch}}.eastus.cloudapp.azure.com", "deployment_subdomain": "${{steps.extract_branch.outputs.branch}}", "apiimagetag": "develop", "uiimagetag": "${{steps.extract_branch.outputs.branch}}" }'
