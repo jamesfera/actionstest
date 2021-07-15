@@ -17,6 +17,9 @@ jobs:
       run: |
         echo GITHUB_REF: ${GITHUB_REF#refs/heads/}
         echo PR: ${{ github.event.pull_request.head.ref }}
+        PR_BRANCH=${{ github.event.pull_request.head.ref }}
+        PR_BRANCH=$(echo $PR_BRANCH | tr -dc '[:alnum:]\n\r' | tr '[:upper:]' '[:lower:]')
+        echo PR_BRANCH: $PR_BRANCH
         echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
 
     - name: Build Docker Image
@@ -34,7 +37,7 @@ jobs:
         ref: ${{ github.event.pull_request.head.ref }}
         workflow: Create and Bootstrap Virtual Machine
         token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
-        inputs: '{ "name": "${{ github.event.pull_request.head.ref }}", "swarm": "true" }'
+        inputs: '{ "name": "${{ steps.extract_branch.outputs.branch }}", "swarm": "true" }'
 
     - name: Deploy
       uses: aurelien-baudet/workflow-dispatch@v2
@@ -44,4 +47,4 @@ jobs:
         repo: jamesfera/actionstest
         workflow: Docker Image Deployment
         token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
-        inputs: '{ "host": "aexautodeploy${{ github.event.pull_request.head.ref }}.eastus.cloudapp.azure.com", "deployment_subdomain": "${{github.event.pull_request.head.ref}}", "apiimagetag": "develop", "uiimagetag": "${{github.event.pull_request.head.ref}}" }'
+        inputs: '{ "host": "aexautodeploy${{steps.extract_branch.outputs.branch}}.eastus.cloudapp.azure.com", "deployment_subdomain": "${{steps.extract_branch.outputs.branch}}", "apiimagetag": "develop", "uiimagetag": "${{steps.extract_branch.outputs.branch}}" }'
