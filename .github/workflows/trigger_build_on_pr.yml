@@ -34,7 +34,7 @@ jobs:
         ref: ${{ github.event.pull_request.head.ref }}
         workflow: Create and Bootstrap Virtual Machine
         token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
-        inputs: '{ "name": "${{ steps.extract_branch.outputs.branch }}", "swarm": "true" }'
+        inputs: '{ "name": "${{ github.event.pull_request.head.ref }}", "swarm": "true" }'
 
     - name: Deploy
       uses: aurelien-baudet/workflow-dispatch@v2
@@ -44,4 +44,4 @@ jobs:
         repo: jamesfera/actionstest
         workflow: Docker Image Deployment
         token: ${{ secrets.ACTIONS_ACCESS_TOKEN }}
-        inputs: '{ "host": "aexautodeploy${{steps.extract_branch.outputs.branch}}.eastus.cloudapp.azure.com", "deployment_subdomain": "${{steps.extract_branch.outputs.branch}}", "apiimagetag": "develop", "uiimagetag": "${{steps.extract_branch.outputs.branch}}" }'
+        inputs: '{ "host": "aexautodeploy${{ github.event.pull_request.head.ref }}.eastus.cloudapp.azure.com", "deployment_subdomain": "${{github.event.pull_request.head.ref}}", "apiimagetag": "develop", "uiimagetag": "${{github.event.pull_request.head.ref}}" }'
